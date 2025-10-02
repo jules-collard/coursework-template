@@ -161,3 +161,6 @@ penguins %>%
 ```
 
 ## References
+
+::: {#refs}
+:::

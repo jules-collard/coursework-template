@@ -13,7 +13,7 @@ body{
 }
 </style>
 
-# Exploratory Data Analysis
+## Exploratory Data Analysis
 
 We will investigate the *penguins* dataset provided in the
 `palmerpenguins` R package (Horst, Hill, and Gorman 2020). First,
@@ -123,7 +123,7 @@ Figure 3: Means Comparison Plots
 
 </div>
 
-# Code appendix
+## Code appendix
 
 ``` r
 knitr::opts_chunk$set(
@@ -184,7 +184,7 @@ penguins %>%
   theme_bw()
 ```
 
-# References
+## References
 
 <div id="refs" class="references csl-bib-body hanging-indent"
 entry-spacing="0">
