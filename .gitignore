@@ -52,3 +52,6 @@ rsconnect/
 # Rendering Output
 *.pdf
 *.html
+
+# OS Files
+.DS_Store
