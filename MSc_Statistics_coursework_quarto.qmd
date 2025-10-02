@@ -9,6 +9,7 @@ format:
     self-contained: true
     df-print: paged
   pdf: default
+  gfm: default
 format-links: false
 bibliography: "MSc_Statistics_coursework_template_quarto.bib" 
 ---
@@ -46,7 +47,7 @@ require(kableExtra)
 require(tidyverse)
 ```
 
-# Exploratory Data Analysis
+## Exploratory Data Analysis
 
 We will investigate the _penguins_ dataset provided in the `palmerpenguins` R package [@palmer-penguins]. First, @tbl-penguins shows the structure of the data:
 
@@ -154,9 +155,9 @@ penguins %>%
 ```
 
 
-# Code appendix
+## Code appendix
 
 ```{r ref.label=knitr::all_labels(), echo = T, eval = F}
 ```
 
-# References
+## References
