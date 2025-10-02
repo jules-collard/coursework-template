@@ -25,150 +25,136 @@ body{
 }
 </style>
 
-```{r setup, include = FALSE, tidy=TRUE}
+```{r}
+#| label: setup
+#| include: false
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 include_solutions <- TRUE
 ```
-```{r setup2, include=FALSE, tidy=TRUE}
+
+```{r}
+#| label: package-imports
+#| include: false
+
 require(rmarkdown)
 require(knitr)
 require(kableExtra)
-# Put any library imports and other preamble here.
+require(tidyverse)
 ```
 
-This Rmarkdown document is intended to provide a basic template that you may use throughout the course, and to introduce you to basic functionality of the open-source bookdown R package for writing Rmarkdown documents [@xie2016bookdown].
+# Exploratory Data Analysis
 
-Please note:
+We will investigate the _penguins_ dataset provided in the `palmerpenguins` R package [@palmer-penguins]. First, @tbl-penguins shows the structure of the data:
 
-- Rmarkdown syntax for the title and document style;
-- bookdown syntax to label and reference equations;
-- bookdown syntax to referencing literate and provide a bib file;
-- kable syntax to build clean and clear tables that can be referenced;
-- Rmarkdown inline functions to collect and print all code used.
+```{r}
+#| label: tbl-penguins
+#| echo: false
+#| tbl-cap: Sample of Penguins Dataset
 
-# Sampling from the Cauchy distribution
-
-In this question we seek to generate samples from the standard Cauchy distribution, with pdf given by
-\begin{equation}
-  p(x) = \frac{1}{\pi (1 + x^2)}, \quad x \in \mathbb{R}.
-  (\#eq:1)
-\end{equation}
-The cdf associated with \@ref(eq:1) is given by
-\begin{equation}
-  F(x) = \frac{1}{\pi}\arctan(x) + \frac{1}{2}.
-  (\#eq:2)
-\end{equation}
-
-**Part a.**  We apply the inversion method as described by @graham2013stochastic. We first compute the generalised inverse of the cdf \@ref(eq:2).  To this end, let $y\in [0,1]$, then
-
-\begin{align}
-    y &= F(x), \quad \iff (\#eq:3a) \\
-    y &= \frac{1}{\pi}\arctan(x) + \frac{1}{2} \quad \iff \\
-    y-\frac{1}{2}  &= \frac{1}{\pi}\arctan(x)  \quad \iff \\
-    \pi\left(y-\frac{1}{2}\right)  &= \arctan(x)  \quad \iff \\
-    x &= \tan\left(\pi\left(y-\frac{1}{2}\right)\right). 
-\end{align}
-
-By the inversion method [@graham2013stochastic], if $Y \sim U[0,1]$, then 
-
-\begin{equation}
-  X = \tan\left(\pi\left(Y-\frac{1}{2}\right)\right),
-  (\#eq:4)
-\end{equation}
-
-```{r, echo=FALSE}
-
-### Question 1a
-
-generate_cauchy_samples <- function(n) {
-  # Generate 'n' uniform random numbers between 0 and 1
-  u <- runif(n)
-  
-  # Apply the inverse CDF formula to get Cauchy samples
-  samples <- tan(pi * (u - 0.5))  
-  return(samples)
-}
-
-num_samples = 1000
-
-# Generate samples from the standard Cauchy distribution
-cauchy_samples <- generate_cauchy_samples(num_samples)
-
+penguins <- palmerpenguins::penguins
+penguins %>%
+  head() %>%
+  kable(
+    col.names=c('Species', 'Island', 'Bill Length (mm)', 'Bill Depth (mm)', 'Flipper Length (mm)', 'Body Mass (g)', 'Sex', 'Year')
+  )
 ```
 
+Each row represents a penguin, for which we have information on its dimensions, species, location and more. We see that some of the rows contain missing data, so we can add a column showing whether each row contains any missing data:
 
-**Part b.**   The empirical cdf based on $N$ samples $x_1, \ldots, x_N$ is defined to be
-              $$
-                \widehat{F}(t) = \frac{1}{N}\sum_{i = 1}^N \mathbf{1}[x_i \leq t], \quad x\in \mathbb{t}.
-              $$
-To generate the empirical cdf in R, we perform the following steps:
-            
-a. Generate $N$ samples from the distribution using the inversion method, as detailed in the previous question.  
-b. Sort the samples in ascending order $x_1 \leq x_2 \leq x_3 \leq \ldots \leq x_N$.
-c. The empirical CDF at value $x_i$ is given by $i/N$.  
+```{r}
+#| label: add-missing
 
-
-In the following figure we plot the empirical cdf based on 1000 samples (black line), and compare against the analytical cdf (red line).  
-
-```{r echo=FALSE}
-
-### Question 1b
-
-# Sort the samples in ascending order
-sorted_samples <- sort(cauchy_samples)
-
-# Calculate the cumulative probabilities for each sample
-cumulative_probs <- (1:num_samples) / num_samples
-
-x_values <- seq(-100, 100,  length.out = 1000)
-cdf_values <- pcauchy(x_values)
-
-# Plot the empirical CDF
-plot(sorted_samples, 
-     cumulative_probs, 
-     type = "s", 
-     xlab = "x", 
-     ylab = "Empirical CDF", 
-     main = "Empirical CDF of Standard Cauchy Distribution", 
-     lwd = 2, lty = 1, xlim = c(-100,100))
-lines(x_values, cdf_values, type = "l", 
-      xlab = "x", ylab = "CDF", main = "CDF of Standard Cauchy Distribution", 
-      col = 'red', lty = 2)
+penguins <- penguins %>%
+  mutate(missing = if_any(everything(), is.na))
 ```
 
-**Part c.**  We shall use the samples to compute the empirical cdf for the values $x = 0.5, 1, 10$.  
+We can calculate some statistics for each species:
 
-```{r echo=FALSE}
+```{r}
+#| label: means
+#| echo: FALSE
 
-### Question 1c
+penguins %>%
+  filter(missing == FALSE) %>%
+  group_by(species) %>%
+  summarise(avg_bill_length = mean(bill_length_mm, na.rm = TRUE),
+            avg_flipper_length = mean(flipper_length_mm, na.rm = TRUE)) %>%
+  kable(
+    col.names=c('Species', 'Avg Bill Length (mm)', 'Avg Flipper Length (mm)'),
+    digits=2
+  )
+```
 
-calculate_ecdf <- function(x) {
-    return(sum(sorted_samples <= x)/num_samples)
-}
+## Plots
 
-df <- data.frame(x = c(0.5, 1.0, 10.0), 
-                ecdf = c(calculate_ecdf(0.5), 
-                         calculate_ecdf(1.0), 
-                         calculate_ecdf(10.0))
-                )
-kbl(df,
-    caption = 'Empirical CDF', 
-    label = 'ecdf',
-    digits = 2) %>%
-  kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed"),
-    font_size = 12)
+We examine the relationship between body mass and flipper length, grouping by species, in @fig-mass-flipper :
+
+```{r}
+#| label: fig-mass-flipper
+#| echo: false
+#| warning: false
+
+penguins %>%
+  ggplot(mapping = aes(x = body_mass_g,
+                       y = flipper_length_mm,
+                       col = species,
+                       shape = species)) +
+  geom_point() +
+  labs(x = 'Body Mass (g)', y = 'Flipper Length (mm)', colour = 'Species', shape = 'Species') +
+  theme_bw()
+```
+
+We can add points for the means in @fig-means :
+
+```{r}
+#| label: fig-means
+#| echo: false
+#| warning: false
+
+means <- penguins %>%
+  group_by(species) %>%
+  summarise(flipper_length_mm = mean(flipper_length_mm, na.rm=TRUE),
+            body_mass_g = mean(body_mass_g, na.rm=TRUE))
+
+ggplot(data = penguins, mapping = aes(x = body_mass_g,
+                                     y = flipper_length_mm,
+                                     col = species,
+                                     shape = species)) +
+  geom_point(alpha = 0.5) +
+  geom_point(data=means, size=5) +
+  labs(x = 'Body Mass (g)', y = 'Flipper Length (mm)', colour = 'Species', shape = 'Species') +
+  theme_bw()
+```
+
+Finally we compare body mass between islands and species in @fig-boxplots :
+
+```{r}
+#| layout-ncol: 2
+#| label: fig-boxplots
+#| echo: false
+#| warning: false
+#| fig-cap: "Means Comparison Plots"
+#| fig-subcap: 
+#| - "Comparison by Island"
+#| - "Comparison by Species"
+
+penguins %>%
+  ggplot(mapping = aes(x = island, y = body_mass_g)) +
+  geom_boxplot() +
+  theme_bw()
+
+penguins %>%
+  ggplot(mapping = aes(x = species, y = body_mass_g)) +
+  geom_boxplot() +
+  theme_bw()
 ```
 
 
 # Code appendix
-
-Rather than re-paste all the code to the appendix, here is a trick which makes the markdown file output all the code (without) execution in the appendix, without any duplication.
-
-Please keep in mind to format the code so that the entire code is clearly visible and does not run into the margins of the pdf version.  
 
 ```{r ref.label=knitr::all_labels(), echo = T, eval = F}
 ```
